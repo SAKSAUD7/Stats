@@ -11,7 +11,7 @@ const App = () => {
   };
 
   const [activeTab, setActiveTab] = useState("wizard");
-  const [history, setHistory] = useState([]);
+  const [history, setHistory]     = useState([]);
   const [currentNode, setCurrentNode] = useState(initialNode);
   const [selectedTest, setSelectedTest] = useState(null);
 
@@ -20,24 +20,21 @@ const App = () => {
       setSelectedTest(null);
     } else if (history.length > 0) {
       const prev = history[history.length - 1];
-      setHistory((h) => h.slice(0, -1));
+      setHistory(h => h.slice(0, -1));
       setCurrentNode(prev);
     }
   };
 
   const handleSelect = (node) => {
+    // if leaf-with-arrow, split parent/child
     if ((!node.children || node.children.length === 0) && node.title.includes("→")) {
-      const [parent, child] = node.title.split("→").map((s) => s.trim());
-      setHistory((h) => [...h, currentNode]);
-      setCurrentNode({
-        title: parent,
-        children: [{ id: node.id + "-split", title: child, children: [] }],
-      });
-      setSelectedTest(null);
+      const [parent, child] = node.title.split("→").map(s => s.trim());
+      setHistory(h => [...h, currentNode]);
+      setCurrentNode({ title: parent, children: [{ id: node.id+"-s", title: child, children: []}] });
       return;
     }
 
-    setHistory((h) => [...h, currentNode]);
+    setHistory(h => [...h, currentNode]);
     let next = node;
     while (next.children && next.children.length === 1) {
       next = next.children[0];
@@ -51,60 +48,53 @@ const App = () => {
     const same = next.title === currentNode.title;
     setCurrentNode({
       title: same ? "" : next.title,
-      children: next.children,
+      children: next.children
     });
-    setSelectedTest(null);
   };
 
   const runTest = () => {
     alert(`Running test: ${selectedTest.title}`);
     setSelectedTest(null);
   };
-
-  const cancelTest = () => {
-    setSelectedTest(null);
-  };
+  const cancelTest = () => setSelectedTest(null);
 
   const switchToWizard = () => {
     setActiveTab("wizard");
     setSelectedTest(null);
     setHistory([]);
-    setCurrentNode(initialNode); // 💡 Reset to first question
+    setCurrentNode(initialNode);
   };
 
   return (
     <div className="wizard-container">
       <div className="wizard-box">
+
         {/* Header */}
         <div className="wizard-header">
           <div className="tabs-group">
             <span
-              className={activeTab === "wizard" ? "tab active-tab" : "tab"}
+              className={activeTab==="wizard"?"tab active-tab":"tab"}
               onClick={switchToWizard}
-            >
-              Advisor Wizard ▾
-            </span>
+            >Advisor Wizard ▾</span>
             <span
-              className={activeTab === "stat" ? "tab active-tab" : "tab"}
-              onClick={() => setActiveTab("stat")}
-            >
-              Stat Master AI
-            </span>
+              className={activeTab==="stat"?"tab active-tab":"tab"}
+              onClick={()=>setActiveTab("stat")}
+            >Stat Master AI</span>
           </div>
         </div>
 
         {/* Content */}
         <div className="wizard-content">
           <div className="wizard-left">
-            <img src={pieLogo} alt="wizard icon" className="wizard-logo" />
+            <img src={pieLogo} alt="wizard icon" className="wizard-logo"/>
           </div>
           <div className="wizard-right">
-            {activeTab === "wizard" ? (
+            {activeTab==="wizard" ? (
               <>
                 {!selectedTest ? (
                   <>
                     {currentNode.title && <h2>{currentNode.title}</h2>}
-                    <OptionTree node={currentNode} onSelect={handleSelect} />
+                    <OptionTree node={currentNode} onSelect={handleSelect}/>
                   </>
                 ) : (
                   <h2>{selectedTest.title}</h2>
@@ -113,7 +103,7 @@ const App = () => {
             ) : (
               <div>
                 <h2>Stat Master AI</h2>
-                <p style={{ opacity: 0.6 }}>Coming soon...</p>
+                <p style={{opacity:0.6}}>Coming soon…</p>
               </div>
             )}
           </div>
@@ -121,40 +111,42 @@ const App = () => {
 
         {/* Footer */}
         <div className="wizard-footer">
-          {activeTab === "wizard" ? (
-            !selectedTest ? (
-              <>
-                <button className="footer-btn">Help</button>
-                <button
-                  className="footer-btn"
-                  onClick={handleBack}
-                  disabled={history.length === 0}
-                >
-                  &lt; Back
-                </button>
-                <button className="footer-btn" disabled>
-                  Next &gt;
-                </button>
-                <button className="footer-btn cancel-btn">Cancel</button>
-              </>
-            ) : (
-              <>
-                <button className="footer-btn" onClick={runTest}>
-                  Run Test
-                </button>
-                <button className="footer-btn cancel-btn" onClick={cancelTest}>
-                  Cancel
-                </button>
-                <button className="footer-btn" onClick={handleBack}>
-                  &lt; Back
-                </button>
-              </>
-            )
+          {activeTab==="wizard" && !selectedTest ? (
+            <>
+              <button className="footer-btn">Help</button>
+              <button
+                className="footer-btn"
+                onClick={handleBack}
+                disabled={history.length===0}
+              >&lt; Back</button>
+              <button className="footer-btn" disabled>Next &gt;</button>
+              <button className="footer-btn cancel-btn">Cancel</button>
+            </>
+          ) : selectedTest ? (
+            <>
+              <button className="footer-btn" onClick={runTest}>Run Test</button>
+              <button className="footer-btn cancel-btn" onClick={cancelTest}>Cancel</button>
+              <button className="footer-btn" onClick={handleBack}>&lt; Back</button>
+            </>
           ) : (
-            <div className="footer-placeholder" />
+            <div className="footer-placeholder"/>
           )}
         </div>
       </div>
+
+      {/* Modal (in‑lined) */}
+      {selectedTest && (
+        <div className="tm-overlay">
+          <div className="tm-dialog">
+            <div className="tm-header">Suggested Test</div>
+            <div className="tm-body">{selectedTest.title}</div>
+            <div className="tm-footer">
+              <button className="tm-btn tm-run" onClick={runTest}>Run Test</button>
+              <button className="tm-btn tm-cancel" onClick={cancelTest}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
